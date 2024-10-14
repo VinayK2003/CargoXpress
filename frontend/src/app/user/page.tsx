@@ -82,6 +82,43 @@ const User: React.FC = () => {
             console.error("Geolocation is not supported by this browser.");
         }
     }, []);
+    const handleBooking = async () => {
+        if (!pickupLocation || !dropoffLocation || !carType || estimatedPrice === null) {
+            alert("Please fill in all details before booking.");
+            return;
+        }
+
+        const bookingData = {
+            pickupLocation,
+            dropoffLocation,
+            carType,
+            estimatedPrice,
+            pickupAddress,
+            dropoffAddress,
+            bookingId: Math.random().toString(36).substr(2, 9), // Generate a random booking ID
+            status: 'pending'
+        };
+
+        try {
+            // In a real application, you would send this data to your server
+            // For now, we'll simulate this by storing in localStorage
+            const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+            existingBookings.push(bookingData);
+            localStorage.setItem('bookings', JSON.stringify(existingBookings));
+
+            alert('Booking successful! Waiting for a driver to accept.');
+            // Reset form after successful booking
+            setPickupLocation(null);
+            setDropoffLocation(null);
+            setCarType(null);
+            setEstimatedPrice(null);
+            setPickupAddress('');
+            setDropoffAddress('');
+        } catch (error) {
+            console.error('Error creating booking:', error);
+            alert('There was an error creating your booking. Please try again.');
+        }
+    };
 
     const pricingModel: Record<'sedan' | 'suv' | 'truck', number> = {
         sedan: 1.5,
@@ -254,6 +291,12 @@ const User: React.FC = () => {
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500"
                     >
                         Calculate Price
+                    </button>
+                    <button
+                        onClick={handleBooking}
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 "
+                    >
+                        Book Now
                     </button>
 
                     <div className="mb-4">
