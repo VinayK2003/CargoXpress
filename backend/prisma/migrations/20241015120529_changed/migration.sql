@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "avgTripTime" INTEGER DEFAULT 0,
+ADD COLUMN     "noOfTrips" INTEGER DEFAULT 0;

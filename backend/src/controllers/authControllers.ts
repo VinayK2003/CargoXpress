@@ -30,7 +30,7 @@ export const signup = async (req: Request, res: Response) => {
       },
     });
 
-    return res.status(201).json({ message: "User created successfully!" });
+    return res.status(201).json({ message: "User created successfully!" ,userId:newUser.id});
   } catch (error) {
     return res.status(500).json({ message: "Error signing up", error });
   }
@@ -57,7 +57,7 @@ export const login = async (req: Request, res: Response) => {
     console.log("JWT_SECRET:", token);
 
     // Return the token in the response
-    return res.status(200).json({ message: "User logged in successfully", token });
+    return res.status(200).json({ message: "User logged in successfully", token,userId:user.id });
   } catch (error) {
     return res.status(500).json({ message: "Error logging in", error });
   }
@@ -122,5 +122,45 @@ export const handleBooking = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error handling booking:", error);
     return res.status(500).json({ message: "Error handling booking", error });
+  }
+};
+export const driverperformance = async (req: Request, res: Response) => {
+  try {
+    if (req.method === 'PUT') {
+      const { id, distance, earned, rating, noOfTrips, avgTripTime } = req.body;
+      if (!id) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      const user = await prisma.user.findUnique({
+        where: { id },
+      });
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const updatedDriver = await prisma.user.update({
+        where: {
+          id: id,
+          role: "driver"
+        },
+        data: {
+          distanceTravelled: Math.floor(user.distanceTravelled + distance), // Use correct field
+          earned: Math.floor(user.earned + earned), // Use correct field
+          completedTrips: noOfTrips, // Update the completedTrips count
+          avgTripTime: Math.floor(avgTripTime), // Use correct field
+        },
+      });
+
+      return res.status(200).json({
+        message: 'Driver data updated successfully',
+        driver: updatedDriver,
+      });
+    } else {
+      return res.status(405).json({ message: "Method not allowed" });
+    }
+  } catch (error) {
+    console.error("Error updating driver performance:", error);
+    return res.status(500).json({ message: "Error updating driver performance", error });
   }
 };

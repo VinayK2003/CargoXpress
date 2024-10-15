@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import axios from 'axios';
-import DriverMap from '../components/DriverMap/DriverMap';
+import DriverMap from '../../components/DriverMap/DriverMap';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,17 +17,32 @@ interface Booking {
     id: number;
     pickupAddress: string;
     dropoffAddress: string;
-    carType: string;
+    carType: 'sedan' | 'truck' | 'suv'; 
     estimatedPrice: number;
     status: string;
     pickupLocation: { lat: number; lng: number };
     dropoffLocation: { lat: number; lng: number };
 }
+interface Driver {
+    distance:number,
+    earned: number;
+    noOfTrips:number;
+    avgTripTime:number;
+}
+
 
 const Driver: React.FC = () => {
+    const pathname = usePathname();
+    const userId = Number(pathname.split('/')[2]);
     const [availableBookings, setAvailableBookings] = useState<Booking[]>([]);
     const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
     const [currentJob, setCurrentJob] = useState<Booking | null>(null);
+    const [driverData, setDriverData] = useState<Driver>({ distance: 0, earned: 0,noOfTrips: 0, avgTripTime: 0 });
+    const speeds = {
+        "sedan": 60,  
+        "truck": 50,  
+        "suv": 55,   
+    };
 
     useEffect(() => {
         const fetchBookings = async () => {
@@ -66,12 +82,6 @@ const Driver: React.FC = () => {
         const updatedBookings = availableBookings.filter(b => b.id !== booking.id);
         setAvailableBookings(updatedBookings);
         setCurrentJob({ ...booking, status: 'accepted' });
-
-        const allBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-        const updatedAllBookings = allBookings.map((b: Booking) => 
-            b.id === booking.id ? { ...b, status: 'accepted' } : b
-        );
-        localStorage.setItem('bookings', JSON.stringify(updatedAllBookings));
     };
 
     const handleReject = async (booking: Booking) => {
@@ -89,15 +99,48 @@ const Driver: React.FC = () => {
     const handleLogout = () => {
         window.location.href = '/login'; 
     };
+    const calculateDistance = (pickup: { lat: number; lng: number }, dropoff: { lat: number; lng: number }) => {
+        const R = 6371; // Radius of the Earth in km
+        const dLat = (dropoff.lat - pickup.lat) * (Math.PI / 180);
+        const dLng = (dropoff.lng - pickup.lng) * (Math.PI / 180);
+        const a = 
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(pickup.lat * (Math.PI / 180)) * Math.cos(dropoff.lat * (Math.PI / 180)) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return distance;
+    };
+    const calculateTime = (distance: number, carType: 'sedan' | 'truck' | 'suv') => {
+        const speed = speeds[carType]; 
+        return (distance / speed) * 60; 
+    };
 
     const handleUpdateStatus = async (newStatus: string, booking: Booking) => {
         try {
             await axios.put(`http://localhost:5000/api/bookings`, { id: booking.id, status: newStatus });
+            if (newStatus === 'delivered') {
+                const distance = Math.floor(calculateDistance(booking.pickupLocation, booking.dropoffLocation)); // Convert to integer
+                const time = Math.floor(calculateTime(distance, booking.carType)); // Convert to integer
+                const newEarnings = Math.floor(driverData.earned + booking.estimatedPrice); // Convert to integer
+                const newNoOfTrips = driverData.noOfTrips + 1;
+                const newAvgTripTime = Math.floor(((driverData.avgTripTime * driverData.noOfTrips) + time) / newNoOfTrips); // Convert to integer
+                // console.log(user.id)
+
+                await axios.put('http://localhost:5000/api/driver', {
+                    id:userId,
+                    distance: distance,
+                    earned: newEarnings,
+                    noOfTrips: newNoOfTrips,
+                    avgTripTime: newAvgTripTime,
+                });
+            }
             setCurrentJob((prev) => (prev ? { ...prev, status: newStatus } : null));
         } catch (error) {
             console.error("Error updating booking status:", error);
         }
     };
+
 
     return (
         <div className="flex flex-col min-h-screen">

@@ -34,8 +34,10 @@ const Login = () => {
 
       if (res.ok) {
         const data = await res.json();
+        console.log(data);
+        const userId = data.userId;
         localStorage.setItem("token", data.token); 
-        const roleRedirectPath = role === "driver" ? "/driver" : "/user";
+        const roleRedirectPath = role === "driver" ?`/driver/${userId}` : `/user/${userId}`;
         router.push(roleRedirectPath); 
       } else {
         const errorData = await res.json();

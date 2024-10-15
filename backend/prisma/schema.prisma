@@ -24,6 +24,11 @@ model User {
   name     String
   role     String
   carType  String?
+  earned         Int?      @default(0) // Total earnings for drivers
+  completedTrips Int?      @default(0) // Count of completed trips
+  distanceTravelled Int?      @default(0) // Count of completed trips
+  avgTripTime Int?      @default(0) // Count of completed trips
+  rating         Float?    @default(0) // Average rating given by users
 }
 
 model Booking {
