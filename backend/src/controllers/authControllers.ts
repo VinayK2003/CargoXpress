@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/jwt";
-import User from "../models/user"
 import {PrismaClient} from "@prisma/client"
 
 const prisma=new PrismaClient();
+
 
 export const signup = async (req: Request, res: Response) => {
   try {
@@ -60,5 +60,67 @@ export const login = async (req: Request, res: Response) => {
     return res.status(200).json({ message: "User logged in successfully", token });
   } catch (error) {
     return res.status(500).json({ message: "Error logging in", error });
+  }
+};
+
+export const handleBooking = async (req: Request, res: Response) => {
+  try {
+    if (req.method === 'POST') {
+      // Create a new booking
+      const { pickupLocation, dropoffLocation, pickupAddress, dropoffAddress, carType, estimatedPrice } = req.body;
+
+      const newBooking = await prisma.booking.create({
+        data: {
+          pickupLocation,
+          dropoffLocation,
+          pickupAddress,
+          dropoffAddress,
+          carType,
+          estimatedPrice,
+          status: 'pending',
+        },
+      });
+
+      return res.status(201).json(newBooking);
+    } else if (req.method === 'GET') {
+      // Fetch pending bookings
+      const pendingBookings = await prisma.booking.findMany({
+        where: {
+          status: 'pending',
+        },
+      });
+
+      return res.status(200).json(pendingBookings);
+    } else if (req.method === 'DELETE') {
+      // Delete a booking
+      const { id } = req.body; // Assuming you send the booking ID in the request body
+
+      const deletedBooking = await prisma.booking.delete({
+        where: {
+          id: id, // Use the correct identifier
+        },
+      });
+
+      return res.status(204).json({ message: "Booking deleted successfully" });
+    }
+    else if (req.method === 'PUT') {
+      const { id, status } = req.body; // Assuming you send the booking ID and new status in the request body
+
+      const updatedBooking = await prisma.booking.update({
+        where: {
+          id: id, 
+        },
+        data: {
+          status, 
+        },
+      });
+
+      return res.status(200).json(updatedBooking); // Return the updated booking
+    } else {
+      return res.status(405).json({ message: "Method not allowed" }); // Method not allowed
+    }
+  } catch (error) {
+    console.error("Error handling booking:", error);
+    return res.status(500).json({ message: "Error handling booking", error });
   }
 };

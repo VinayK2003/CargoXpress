@@ -25,3 +25,15 @@ model User {
   role     String
   carType  String?
 }
+
+model Booking {
+  id             Int      @id @default(autoincrement())
+  pickupLocation Json
+  dropoffLocation Json
+  pickupAddress  String
+  dropoffAddress String
+  carType        String
+  estimatedPrice Float
+  status         String
+  createdAt      DateTime @default(now())
+}

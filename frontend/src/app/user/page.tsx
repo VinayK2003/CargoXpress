@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,35 +8,35 @@ import { LatLngExpression } from "leaflet";
 import 'leaflet-control-geocoder';
 
 interface Suggestion {
-  place_id: number;
-  display_name: string;
-  lat: string;
-  lon: string;
+    place_id: number;
+    display_name: string;
+    lat: string;
+    lon: string;
 }
 
 const RoutingMachine: React.FC<{ pickup: L.LatLngExpression; dropoff: L.LatLngExpression }> = ({ pickup, dropoff }) => {
-  const map = useMap();
+    const map = useMap();
 
-  useEffect(() => {
-    if (!map) return;
+    useEffect(() => {
+        if (!map) return;
 
-    const routingControl = L.Routing.control({
-      waypoints: [
-        L.latLng(pickup),
-        L.latLng(dropoff)
-      ],
-      routeWhileDragging: true,
-      showAlternatives: false,
-      addWaypoints: false,
-      fitSelectedRoutes: true,
-    }).addTo(map);
+        const routingControl = L.Routing.control({
+            waypoints: [
+                L.latLng(pickup),
+                L.latLng(dropoff)
+            ],
+            routeWhileDragging: true,
+            showAlternatives: false,
+            addWaypoints: false,
+            fitSelectedRoutes: true,
+        }).addTo(map);
 
-    return () => {
-      map.removeControl(routingControl);
-    };
-  }, [map, pickup, dropoff]);
+        return () => {
+            map.removeControl(routingControl);
+        };
+    }, [map, pickup, dropoff]);
 
-  return null;
+    return null;
 };
 
 const User: React.FC = () => {
@@ -82,6 +82,7 @@ const User: React.FC = () => {
             console.error("Geolocation is not supported by this browser.");
         }
     }, []);
+
     const handleBooking = async () => {
         if (!pickupLocation || !dropoffLocation || !carType || estimatedPrice === null) {
             alert("Please fill in all details before booking.");
@@ -95,19 +96,25 @@ const User: React.FC = () => {
             estimatedPrice,
             pickupAddress,
             dropoffAddress,
-            bookingId: Math.random().toString(36).substr(2, 9), // Generate a random booking ID
-            status: 'pending'
+            // bookingId: Math.random().toString(36).substr(2, 9), // Generate a random booking ID
         };
+        console.log(bookingData)
 
         try {
-            // In a real application, you would send this data to your server
-            // For now, we'll simulate this by storing in localStorage
-            const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-            existingBookings.push(bookingData);
-            localStorage.setItem('bookings', JSON.stringify(existingBookings));
-
+            const response = await fetch('http://localhost:5000/api/bookings', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bookingData),
+            });
+            if (!response.ok) {
+                throw new Error('Error creating booking');
+            }
+            
+            const data = await response.json();
+            console.log(data);
             alert('Booking successful! Waiting for a driver to accept.');
-            // Reset form after successful booking
             setPickupLocation(null);
             setDropoffLocation(null);
             setCarType(null);
@@ -135,7 +142,7 @@ const User: React.FC = () => {
                 dropoffLocation.lng
             );
             const pricePerKm = pricingModel[carType];
-            const price = pricePerKm * distance;
+            const price = pricePerKm * distance; // Total price based on distance and car type
             setEstimatedPrice(Number(price.toFixed(2)));
         } else {
             setEstimatedPrice(null);
@@ -143,7 +150,7 @@ const User: React.FC = () => {
     };
 
     const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371;
+        const R = 6371; // Radius of the Earth in km
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
         const a =
@@ -151,7 +158,7 @@ const User: React.FC = () => {
             Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+        return R * c; // Distance in km
     };
 
     const fetchSuggestions = async (query: string): Promise<Suggestion[]> => {
@@ -230,30 +237,32 @@ const User: React.FC = () => {
                         <select
                             id="carType"
                             value={carType || ''}
-                            onChange={(e) => setCarType(e.target.value as 'sedan' | 'suv' | 'truck' | null)}
-                            className="border border-gray-300 p-2 rounded w-full"
+                            onChange={(e) => setCarType(e.target.value as 'sedan' | 'suv' | 'truck')}
+                            className="border rounded p-2 w-full"
                         >
-                            <option value="">Select a car type</option>
+                            <option value="" disabled>Select a car type</option>
                             <option value="sedan">Sedan</option>
                             <option value="suv">SUV</option>
                             <option value="truck">Truck</option>
                         </select>
                     </div>
 
-                    <div className="mb-4 relative">
-                        <label className="block mb-2 font-semibold">Pickup Address:</label>
+                    <div className="mb-4">
+                        <label className="block mb-2 font-semibold" htmlFor="pickup">Pickup Address:</label>
                         <input
                             type="text"
+                            id="pickup"
                             value={pickupAddress}
                             onChange={handlePickupAddressChange}
-                            className="border border-gray-300 p-2 rounded w-full"
+                            className="border rounded p-2 w-full"
+                            placeholder="Enter pickup address"
                         />
                         {pickupSuggestions.length > 0 && (
-                            <ul className="absolute z-10 bg-white border border-gray-300 w-full mt-1 rounded shadow-lg">
+                            <ul className="border border-gray-300 rounded mt-1">
                                 {pickupSuggestions.map((suggestion) => (
                                     <li
                                         key={suggestion.place_id}
-                                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                                        className="p-2 hover:bg-gray-200 cursor-pointer"
                                         onClick={() => handleSuggestionSelect(suggestion, 'pickup')}
                                     >
                                         {suggestion.display_name}
@@ -263,20 +272,22 @@ const User: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="mb-4 relative">
-                        <label className="block mb-2 font-semibold">Drop-off Address:</label>
+                    <div className="mb-4">
+                        <label className="block mb-2 font-semibold" htmlFor="dropoff">Dropoff Address:</label>
                         <input
                             type="text"
+                            id="dropoff"
                             value={dropoffAddress}
                             onChange={handleDropoffAddressChange}
-                            className="border border-gray-300 p-2 rounded w-full"
+                            className="border rounded p-2 w-full"
+                            placeholder="Enter dropoff address"
                         />
                         {dropoffSuggestions.length > 0 && (
-                            <ul className="absolute z-10 bg-white border border-gray-300 w-full mt-1 rounded shadow-lg">
+                            <ul className="border border-gray-300 rounded mt-1">
                                 {dropoffSuggestions.map((suggestion) => (
                                     <li
                                         key={suggestion.place_id}
-                                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                                        className="p-2 hover:bg-gray-200 cursor-pointer"
                                         onClick={() => handleSuggestionSelect(suggestion, 'dropoff')}
                                     >
                                         {suggestion.display_name}
@@ -292,37 +303,31 @@ const User: React.FC = () => {
                     >
                         Calculate Price
                     </button>
+
+                    {estimatedPrice !== null && (
+                        <div className="mt-4">
+                            <h3 className="font-semibold">Estimated Price: ${estimatedPrice}</h3>
+                        </div>
+                    )}
+
                     <button
                         onClick={handleBooking}
-                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 "
+                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 mt-4"
                     >
                         Book Now
                     </button>
-
-                    <div className="mb-4">
-                        <h3 className="text-lg font-semibold">Estimated Price:</h3>
-                        {estimatedPrice !== null && (
-                            <div className="text-gray-600">{`$${estimatedPrice}`}</div>
-                        )}
-                    </div>
-
-                    <MapContainer center={userLocation ? [userLocation.lat, userLocation.lng] : [0, 0] as LatLngExpression} zoom={13} style={{ height: '400px', borderRadius: '8px' }}>
-                        <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        />
-                        {userLocation && <Marker position={[userLocation.lat, userLocation.lng] as LatLngExpression} />}
-                        {pickupLocation && <Marker position={[pickupLocation.lat, pickupLocation.lng] as LatLngExpression} />}
-                        {dropoffLocation && <Marker position={[dropoffLocation.lat, dropoffLocation.lng] as LatLngExpression} />}
-                        {pickupLocation && dropoffLocation && (
-                            <RoutingMachine
-                                pickup={[pickupLocation.lat, pickupLocation.lng]}
-                                dropoff={[dropoffLocation.lat, dropoffLocation.lng]}
-                            />
-                        )}
-                    </MapContainer>
                 </div>
             </div>
+
+            <MapContainer center={userLocation || [51.505, -0.09]} zoom={13} className="h-96">
+                <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                {pickupLocation && <Marker position={pickupLocation} />}
+                {dropoffLocation && <Marker position={dropoffLocation} />}
+                <RoutingMachine pickup={pickupLocation || [0, 0]} dropoff={dropoffLocation || [0, 0]} />
+            </MapContainer>
         </div>
     );
 };
