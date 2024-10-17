@@ -6,8 +6,7 @@ import authRoutes from './routes/authRoutes';
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ port: 5001 }); // Separate WebSocket server on port 5001
-
+const wss = new WebSocketServer({ port: 5001 });
 const PORT = process.env.PORT || 5000;
 const WS_PORT = 5001;
 
@@ -21,7 +20,6 @@ wss.on('connection', (ws: WebSocket) => {
   ws.on('message', (message: string) => {
     console.log('Received:', message);
     
-    // Broadcast the message to all connected clients
     wss.clients.forEach((client) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(message);

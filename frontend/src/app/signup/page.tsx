@@ -10,7 +10,7 @@ const Signup = () => {
   const [phoneNo, setPhoneNo] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [carType, setCarType] = useState<string>(""); 
-  const [error, setError] = useState<string | null>(null); // State for error message
+  const [error, setError] = useState<string | null>(null); 
   const [isClient, setIsClient] = useState(false);
   const router = useRouter();
 
@@ -48,7 +48,7 @@ const Signup = () => {
             router.push(roleRedirectPath);
         } else {
             const errorData = await res.json();
-            console.log("Error data:", errorData); // Log the error data
+            console.log("Error data:", errorData); 
             setError(errorData.message || "Signup failed");
         }
     } catch (error) {
@@ -62,9 +62,8 @@ const Signup = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
         <h1 className="text-2xl font-semibold mb-6 text-center">Sign Up</h1>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>} {/* Display error message */}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>} 
         <form onSubmit={handleSubmit}>
-          {/* Role Selection */}
           <div className="mb-4">
             <span className="mr-4">Role:</span>
             <label className="mr-4">
@@ -88,7 +87,6 @@ const Signup = () => {
               Driver
             </label>
           </div>
-          {/* Name Input */}
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
               Name
@@ -102,7 +100,6 @@ const Signup = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
-          {/* Username Input */}
           <div className="mb-4">
             <label htmlFor="username" className="block text-sm font-medium text-gray-700">
               Username
@@ -116,7 +113,6 @@ const Signup = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
-          {/* Email Input */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
@@ -130,7 +126,6 @@ const Signup = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
-          {/* Phone Number Input */}
           <div className="mb-4">
             <label htmlFor="phoneno" className="block text-sm font-medium text-gray-700">
               Phone Number
@@ -144,7 +139,6 @@ const Signup = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
-          {/* Car Type Input */}
           {role === "driver" && (
             <div className="mb-4">
               <label htmlFor="carType" className="block text-sm font-medium text-gray-700">
@@ -160,7 +154,6 @@ const Signup = () => {
               />
             </div>
           )}
-          {/* Password Input */}
           <div className="mb-6">
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
@@ -174,14 +167,12 @@ const Signup = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
           </div>
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             Sign Up
           </button>
-          {/* Login Link */}
           <p className="mt-4 text-center text-sm">
             Already have an account?{" "}
             <a href="/login" className="text-indigo-600 hover:text-indigo-500">

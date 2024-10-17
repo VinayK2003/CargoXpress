@@ -14,10 +14,6 @@ router.put("/driver", driverperformance);
 router.get("/vehicles", manageVehicles);
 router.post("/addDriver", addDriver);
 
-// router.get("/admin", authMiddleware, authorize(["admin"]), async (req, res) => {
-//   res.status(200).json({ message: "Welcome, Admin!" });
-// });
-
 router.get("/driver", authMiddleware, authorize(["driver"]), async (req, res) => {
   res.status(200).json({ message: "Welcome, Driver!" });
 });

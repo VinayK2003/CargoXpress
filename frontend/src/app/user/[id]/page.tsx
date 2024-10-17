@@ -4,10 +4,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import 'leaflet-routing-machine';
-import { LatLngExpression } from "leaflet";
 import 'leaflet-control-geocoder';
-import { useRouter } from "next/router";
-import { usePathname } from "next/navigation";
 
 interface Suggestion {
     place_id: number;
@@ -68,11 +65,9 @@ const User: React.FC = () => {
             try {
                 let data;
                 if (event.data instanceof Blob) {
-                  // If the data is a Blob, read it as text
                   const text = await event.data.text();
                   data = JSON.parse(text);
                 } else {
-                  // If it's already a string, parse it directly
                   data = JSON.parse(event.data);
                 }
                 if (data.type === 'driverLocation') {
@@ -138,7 +133,6 @@ const User: React.FC = () => {
             estimatedPrice,
             pickupAddress,
             dropoffAddress,
-            // bookingId: Math.random().toString(36).substr(2, 9), // Generate a random booking ID
         };
 
         try {
@@ -156,12 +150,6 @@ const User: React.FC = () => {
             const data = await response.json();
             console.log(data);
             alert('Booking successful! Waiting for a driver to accept.');
-            // setPickupLocation(null);
-            // setDropoffLocation(null);
-            // setCarType(null);
-            // setEstimatedPrice(null);
-            // setPickupAddress('');
-            // setDropoffAddress('');
         } catch (error) {
             console.error('Error creating booking:', error);
             alert('There was an error creating your booking. Please try again.');
@@ -185,7 +173,7 @@ const User: React.FC = () => {
             );
             setDistance(distance)
             const pricePerKm = pricingModel[carType];
-            const price = pricePerKm * distance; // Total price based on distance and car type
+            const price = pricePerKm * distance; 
             setEstimatedPrice(Number(price.toFixed(2)));
         } else {
             setEstimatedPrice(null);
@@ -193,7 +181,7 @@ const User: React.FC = () => {
     };
 
     const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-        const R = 6371; // Radius of the Earth in km
+        const R = 6371; 
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
         const a =
@@ -201,7 +189,7 @@ const User: React.FC = () => {
             Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in km
+        return R * c; 
     };
 
     const fetchSuggestions = async (query: string): Promise<Suggestion[]> => {
@@ -345,7 +333,7 @@ const User: React.FC = () => {
 
                     {estimatedPrice !== null && (
                         <div className="mt-4">
-                            <h3 className="font-semibold">Estimated Price: ${estimatedPrice}</h3>
+                            <h3 className="font-semibold">Estimated Price: ₹{estimatedPrice}</h3>
                         </div>
                     )}
                     {distance !== null && (
