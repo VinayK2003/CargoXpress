@@ -1,24 +1,40 @@
-import express, { Request, Response } from 'express';
-import userRoutes from './routes/userRoutes';
+import express from 'express';
+import http from 'http';
+import { WebSocket, WebSocketServer } from 'ws';
+import cors from 'cors';
 import authRoutes from './routes/authRoutes';
-const cors = require('cors');
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ port: 5001 }); // Separate WebSocket server on port 5001
+
 const PORT = process.env.PORT || 5000;
+const WS_PORT = 5001;
 
-// CORS configuration
-const corsOptions = {
-  origin: 'http://localhost:3000', // Allow only your frontend origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true, // If you need to include cookies or authorization headers
-};
-
-app.use(cors(corsOptions));
-app.use(express.json()); // Middleware to parse JSON bodies
-
+app.use(cors());
+app.use(express.json());
 app.use('/api', authRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+wss.on('connection', (ws: WebSocket) => {
+  console.log('Client connected to WebSocket');
+
+  ws.on('message', (message: string) => {
+    console.log('Received:', message);
+    
+    // Broadcast the message to all connected clients
+    wss.clients.forEach((client) => {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  });
+
+  ws.on('close', () => {
+    console.log('Client disconnected from WebSocket');
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`HTTP Server is running on http://localhost:${PORT}`);
+  console.log(`WebSocket Server is running on ws://localhost:${WS_PORT}`);
 });

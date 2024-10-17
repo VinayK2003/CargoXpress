@@ -6,6 +6,8 @@ import L from 'leaflet';
 import 'leaflet-routing-machine';
 import { LatLngExpression } from "leaflet";
 import 'leaflet-control-geocoder';
+import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 
 interface Suggestion {
     place_id: number;
@@ -42,20 +44,60 @@ const RoutingMachine: React.FC<{ pickup: L.LatLngExpression; dropoff: L.LatLngEx
 const User: React.FC = () => {
     const [pickupLocation, setPickupLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [dropoffLocation, setDropoffLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [distance,setDistance] =useState<number| null>(null);
     const [estimatedPrice, setEstimatedPrice] = useState<number | null>(null);
     const [carType, setCarType] = useState<'sedan' | 'suv' | 'truck' | null>(null);
     const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [pickupAddress, setPickupAddress] = useState<string>('');
     const [dropoffAddress, setDropoffAddress] = useState<string>('');
+    const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number ,bookingAccepted:boolean} | null>(null);
     const [pickupSuggestions, setPickupSuggestions] = useState<Suggestion[]>([]);
     const [dropoffSuggestions, setDropoffSuggestions] = useState<Suggestion[]>([]);
     const pickupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const dropoffTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const ws = useRef<WebSocket | null>(null);
 
+
+    useEffect(() => {
+        ws.current = new WebSocket('ws://localhost:5001');
+        ws.current.onopen=()=>{
+            console.log("websocket connection established!!")
+        }
+        ws.current.onmessage = async(event) => {
+            console.log("hii")
+            try {
+                let data;
+                if (event.data instanceof Blob) {
+                  // If the data is a Blob, read it as text
+                  const text = await event.data.text();
+                  data = JSON.parse(text);
+                } else {
+                  // If it's already a string, parse it directly
+                  data = JSON.parse(event.data);
+                }
+                if (data.type === 'driverLocation') {
+                  setDriverLocation({
+                    lat: data.location.lat,
+                    lng: data.location.lng,
+                    bookingAccepted: data.bookingAccepted,
+                  });
+                  console.log("Received driver location:", data.location);
+                  console.log("Received driver location:", data.bookAccepted, typeof(data.bookAccepted));
+                }
+              } catch (error) {
+                console.error('Received non-JSON message:', event.data);
+              }
+        };        
+        return () => {
+            if (ws.current) {
+                ws.current.close();
+              }
+        };
+    }, []);
     useEffect(() => {
         const defaultIcon = L.icon({
             iconUrl: 'http://leafletjs.com/examples/custom-icons/leaf-green.png',
-            iconRetinaUrl: '/icons/marker.png',
+            // iconRetinaUrl: '/icons/marker.png',
             shadowUrl: '/icons/marker.png',
             iconSize: [25, 41],
             iconAnchor: [12, 41],
@@ -98,7 +140,6 @@ const User: React.FC = () => {
             dropoffAddress,
             // bookingId: Math.random().toString(36).substr(2, 9), // Generate a random booking ID
         };
-        console.log(bookingData)
 
         try {
             const response = await fetch('http://localhost:5000/api/bookings', {
@@ -115,17 +156,18 @@ const User: React.FC = () => {
             const data = await response.json();
             console.log(data);
             alert('Booking successful! Waiting for a driver to accept.');
-            setPickupLocation(null);
-            setDropoffLocation(null);
-            setCarType(null);
-            setEstimatedPrice(null);
-            setPickupAddress('');
-            setDropoffAddress('');
+            // setPickupLocation(null);
+            // setDropoffLocation(null);
+            // setCarType(null);
+            // setEstimatedPrice(null);
+            // setPickupAddress('');
+            // setDropoffAddress('');
         } catch (error) {
             console.error('Error creating booking:', error);
             alert('There was an error creating your booking. Please try again.');
         }
     };
+
 
     const pricingModel: Record<'sedan' | 'suv' | 'truck', number> = {
         sedan: 1.5,
@@ -141,6 +183,7 @@ const User: React.FC = () => {
                 dropoffLocation.lat,
                 dropoffLocation.lng
             );
+            setDistance(distance)
             const pricePerKm = pricingModel[carType];
             const price = pricePerKm * distance; // Total price based on distance and car type
             setEstimatedPrice(Number(price.toFixed(2)));
@@ -213,10 +256,6 @@ const User: React.FC = () => {
             setDropoffLocation({ lat: parseFloat(suggestion.lat), lng: parseFloat(suggestion.lon) });
             setDropoffSuggestions([]);
         }
-    };
-
-    const handleAddressSubmit = () => {
-        calculateEstimatedPrice();
     };
 
     return (
@@ -298,7 +337,7 @@ const User: React.FC = () => {
                     </div>
 
                     <button
-                        onClick={handleAddressSubmit}
+                        onClick={calculateEstimatedPrice}
                         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500"
                     >
                         Calculate Price
@@ -307,6 +346,11 @@ const User: React.FC = () => {
                     {estimatedPrice !== null && (
                         <div className="mt-4">
                             <h3 className="font-semibold">Estimated Price: ${estimatedPrice}</h3>
+                        </div>
+                    )}
+                    {distance !== null && (
+                        <div className="mt-4">
+                        <h3 className="font-semibold">Distance: {distance.toFixed(2)} km</h3>
                         </div>
                     )}
 
@@ -319,14 +363,25 @@ const User: React.FC = () => {
                 </div>
             </div>
 
-            <MapContainer center={userLocation || [51.505, -0.09]} zoom={13} className="h-96">
+            <MapContainer 
+                center={userLocation ? [userLocation.lat, userLocation.lng] : [51.505, -0.09]} 
+                zoom={13} 
+                style={{ height: "400px", width: "100%" }}
+            >
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                 />
-                {pickupLocation && <Marker position={pickupLocation} />}
-                {dropoffLocation && <Marker position={dropoffLocation} />}
-                <RoutingMachine pickup={pickupLocation || [0, 0]} dropoff={dropoffLocation || [0, 0]} />
+                {pickupLocation && <Marker position={[pickupLocation.lat, pickupLocation.lng]} />}
+                {dropoffLocation && <Marker position={[dropoffLocation.lat, dropoffLocation.lng]} />}
+
+                {pickupLocation && dropoffLocation && (
+                    <RoutingMachine 
+                        pickup={[pickupLocation.lat, pickupLocation.lng]} 
+                        dropoff={[dropoffLocation.lat, dropoffLocation.lng]} 
+                    />
+                )}
+                {driverLocation && <Marker position={[driverLocation.lat, driverLocation.lng]} />}
             </MapContainer>
         </div>
     );

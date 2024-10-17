@@ -37,6 +37,7 @@ const Driver: React.FC = () => {
     const [availableBookings, setAvailableBookings] = useState<Booking[]>([]);
     const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
     const [currentJob, setCurrentJob] = useState<Booking | null>(null);
+    const [socket, setSocket] = useState<WebSocket | null>(null);
     const [driverData, setDriverData] = useState<Driver>({ distance: 0, earned: 0,noOfTrips: 0, avgTripTime: 0 });
     const speeds = {
         "sedan": 60,  
@@ -45,6 +46,11 @@ const Driver: React.FC = () => {
     };
 
     useEffect(() => {
+        const socketConnection = new WebSocket('ws://localhost:5001'); 
+        setSocket(socketConnection);
+        socketConnection.onopen = () => {
+            console.log('WebSocket connection established');
+        };
         const fetchBookings = async () => {
             try {
                 const response = await fetch('http://localhost:5000/api/bookings');
@@ -60,10 +66,15 @@ const Driver: React.FC = () => {
 
         const updateDriverLocation = () => {
             navigator.geolocation.getCurrentPosition((position) => {
-                setDriverLocation({
+                const newDriverLocation = {
                     lat: position.coords.latitude,
                     lng: position.coords.longitude,
-                });
+                };
+                setDriverLocation(newDriverLocation);
+        
+                if (socketConnection) {
+                    socketConnection.send(JSON.stringify({ type:"driverLocation",location: newDriverLocation, bookAccepted: true }));
+                }
             });
         };
         fetchBookings();
@@ -75,6 +86,7 @@ const Driver: React.FC = () => {
         return () => {
             clearInterval(locationInterval);
             clearInterval(bookingInterval);
+            socketConnection.close();
         }
     }, []);
 
@@ -102,7 +114,7 @@ const Driver: React.FC = () => {
         window.location.href = '/login'; 
     };
     const calculateDistance = (pickup: { lat: number; lng: number }, dropoff: { lat: number; lng: number }) => {
-        const R = 6371; // Radius of the Earth in km
+        const R = 6371; 
         const dLat = (dropoff.lat - pickup.lat) * (Math.PI / 180);
         const dLng = (dropoff.lng - pickup.lng) * (Math.PI / 180);
         const a = 
@@ -122,12 +134,11 @@ const Driver: React.FC = () => {
         try {
             await axios.put(`http://localhost:5000/api/bookings`, { id: booking.id, status: newStatus });
             if (newStatus === 'delivered') {
-                const distance = Math.floor(calculateDistance(booking.pickupLocation, booking.dropoffLocation)); // Convert to integer
-                const time = Math.floor(calculateTime(distance, booking.carType)); // Convert to integer
-                const newEarnings = Math.floor(driverData.earned + booking.estimatedPrice); // Convert to integer
+                const distance = Math.floor(calculateDistance(booking.pickupLocation, booking.dropoffLocation));
+                const time = Math.floor(calculateTime(distance, booking.carType)); 
+                const newEarnings = Math.floor(driverData.earned + booking.estimatedPrice); 
                 const newNoOfTrips = driverData.noOfTrips + 1;
-                const newAvgTripTime = Math.floor(((driverData.avgTripTime * driverData.noOfTrips) + time) / newNoOfTrips); // Convert to integer
-                // console.log(user.id)
+                const newAvgTripTime = Math.floor(((driverData.avgTripTime * driverData.noOfTrips) + time) / newNoOfTrips); 
 
                 await axios.put('http://localhost:5000/api/driver', {
                     id:userId,
