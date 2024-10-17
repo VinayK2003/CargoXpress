@@ -78,8 +78,10 @@ const Driver: React.FC = () => {
         }
     }, []);
 
-    const handleAccept = (booking: Booking) => {
+    const handleAccept = async (booking: Booking) => {
         const updatedBookings = availableBookings.filter(b => b.id !== booking.id);
+        
+        await axios.post('http://localhost:5000/api/addDriver', {userId:userId ,id:booking.id  });
         setAvailableBookings(updatedBookings);
         setCurrentJob({ ...booking, status: 'accepted' });
     };
@@ -145,7 +147,8 @@ const Driver: React.FC = () => {
     return (
         <div className="flex flex-col min-h-screen">
             <header className="bg-green-600 text-white p-4 flex justify-between items-center">
-                <div className="text-lg font-bold">Logistics App</div>
+                <div className="text-lg font-bold">Driver Page</div>
+                <div className="text-lg font-bold">Driver Page</div>
                 <div className="flex space-x-4">
                     <Link href="/home" className="hover:underline">Home</Link>
                     <Link href="/profile" className="hover:underline">Profile</Link>
@@ -177,15 +180,15 @@ const Driver: React.FC = () => {
                                 <p>Pickup: {currentJob.pickupAddress}</p>
                                 <p>Drop-off: {currentJob.dropoffAddress}</p>
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger className="mt-2 flex flex-row items-center gap-2 justify-center bg-white text-gray-900 py-1 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
-                                        {currentJob.status.replace(/_/g, ' ')}
+                                    <DropdownMenuTrigger className="mt-2 flex flex-row items-center gap-2 justify-center bg-green-600 text-gray-900 py-1 px-3 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
+                                        {currentJob.status.toUpperCase()}
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent side="bottom" align="start">
                                         <DropdownMenuLabel>Update Status</DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {['pending', 'en_route_to_pickup', 'goods_collected', 'en_route_to_dropoff', 'delivered', 'canceled'].map((status) => (
                                             <DropdownMenuItem key={status} onClick={() => handleUpdateStatus(status, currentJob)}>
-                                                {status.replace(/_/g, ' ')}
+                                                {status.toUpperCase()} 
                                             </DropdownMenuItem>
                                         ))}
                                     </DropdownMenuContent>

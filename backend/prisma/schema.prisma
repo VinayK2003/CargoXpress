@@ -41,4 +41,5 @@ model Booking {
   estimatedPrice Float
   status         String
   createdAt      DateTime @default(now())
+  driverId        Int?
 }

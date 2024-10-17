@@ -147,7 +147,7 @@ export const driverperformance = async (req: Request, res: Response) => {
         data: {
           distanceTravelled: Math.floor(user.distanceTravelled + distance), // Use correct field
           earned: Math.floor(user.earned + earned), // Use correct field
-          completedTrips: noOfTrips, // Update the completedTrips count
+          completedTrips: noOfTrips+1, // Update the completedTrips count
           avgTripTime: Math.floor(avgTripTime), // Use correct field
         },
       });
@@ -162,5 +162,82 @@ export const driverperformance = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating driver performance:", error);
     return res.status(500).json({ message: "Error updating driver performance", error });
+  }
+};
+export const manageVehicles = async (req: Request, res: Response) => {
+    try {
+        const drivers = await prisma.user.findMany({
+            where: {
+                role: 'driver', 
+            },
+            select: {
+                id: true,
+                carType: true,
+                earned: true,
+                completedTrips: true,
+                distanceTravelled: true,
+                avgTripTime: true,
+            },
+        });
+        const bookings = await prisma.booking.findMany({
+            where: {
+                driverId: {
+                    in: drivers.map(driver => driver.id)
+                },
+            },
+            select: {
+                driverId: true,
+                status: true,
+            },
+        });
+        const bookingStatusMap = bookings.reduce((acc, booking) => {
+            const driverId = booking.driverId;
+            if (driverId !== null) {
+                if (!acc[driverId]) {
+                    acc[driverId] = []; 
+                }
+                acc[driverId].push(booking.status);
+            }
+            return acc;
+        }, {} as Record<number, string[]>);
+
+        const driverStats = drivers.map(driver => {
+            return {
+                driverId: driver.id,
+                carType: driver.carType,
+                earned: driver.earned || 0,
+                completedTrips: driver.completedTrips || 0,
+                distanceTravelled: driver.distanceTravelled || 0,
+                avgTripTime: driver.avgTripTime || 0,
+                status: bookingStatusMap[driver.id] || [], 
+            };
+        });
+        console.log("driverStats ",driverStats)
+        return res.status(200).json(driverStats);
+    } catch (error) {
+        console.error('Error managing vehicles:', error);
+        return res.status(500).json({ message: 'An error occurred while managing vehicles.' });
+    }
+};
+
+export const addDriver = async (req: Request, res: Response) => {
+  const { userId, id } = req.body;
+
+  try {
+      if (!userId || !id) {
+          return res.status(400).json({ message: 'userId and id are required.' });
+      }
+      const updatedBooking = await prisma.booking.update({
+          where: {
+              id: id,
+          },
+          data: {
+              driverId: userId,
+          },
+      });
+      return res.status(200).json(updatedBooking);
+  } catch (error) {
+      console.error('Error adding driver:', error);
+      return res.status(500).json({ message: 'An error occurred while adding the driver.' });
   }
 };

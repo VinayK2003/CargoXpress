@@ -55,8 +55,8 @@ const User: React.FC = () => {
     useEffect(() => {
         const defaultIcon = L.icon({
             iconUrl: 'http://leafletjs.com/examples/custom-icons/leaf-green.png',
-            iconRetinaUrl: '/path/to/marker-icon-2x.png',
-            shadowUrl: '/path/to/marker-shadow.png',
+            iconRetinaUrl: '/icons/marker.png',
+            shadowUrl: '/icons/marker.png',
             iconSize: [25, 41],
             iconAnchor: [12, 41],
             popupAnchor: [1, -34],

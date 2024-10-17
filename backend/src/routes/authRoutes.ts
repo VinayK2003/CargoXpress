@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { signup, login,handleBooking,driverperformance } from "../controllers/authControllers";
+import { signup, login,handleBooking,driverperformance,manageVehicles,addDriver } from "../controllers/authControllers";
 import { authMiddleware, authorize } from "../middleware/authMiddleware";
 
 const router = Router();
@@ -11,10 +11,12 @@ router.get("/bookings", handleBooking);
 router.delete("/bookings", handleBooking);
 router.put("/bookings", handleBooking);
 router.put("/driver", driverperformance);
+router.get("/vehicles", manageVehicles);
+router.post("/addDriver", addDriver);
 
-router.get("/admin", authMiddleware, authorize(["admin"]), async (req, res) => {
-  res.status(200).json({ message: "Welcome, Admin!" });
-});
+// router.get("/admin", authMiddleware, authorize(["admin"]), async (req, res) => {
+//   res.status(200).json({ message: "Welcome, Admin!" });
+// });
 
 router.get("/driver", authMiddleware, authorize(["driver"]), async (req, res) => {
   res.status(200).json({ message: "Welcome, Driver!" });
