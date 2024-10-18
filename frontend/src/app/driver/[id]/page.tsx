@@ -36,6 +36,7 @@ const Driver: React.FC = () => {
     const userId = Number(pathname.split('/')[2]);
     const [availableBookings, setAvailableBookings] = useState<Booking[]>([]);
     const [driverLocation, setDriverLocation] = useState({ lat: 0, lng: 0 });
+    const [accepted, setAccepted] = useState(false);
     const [currentJob, setCurrentJob] = useState<Booking | null>(null);
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [driverData, setDriverData] = useState<Driver>({ distance: 0, earned: 0,noOfTrips: 0, avgTripTime: 0 });
@@ -78,7 +79,7 @@ const Driver: React.FC = () => {
             });
         };
         fetchBookings();
-        updateDriverLocation();
+       if(accepted) updateDriverLocation();
         const locationInterval = setInterval(updateDriverLocation, 5000);
 
         const bookingInterval = setInterval(fetchBookings, 5000);
@@ -91,6 +92,7 @@ const Driver: React.FC = () => {
     }, []);
 
     const handleAccept = async (booking: Booking) => {
+        setAccepted(true);
         const updatedBookings = availableBookings.filter(b => b.id !== booking.id);
         
         await axios.post('http://localhost:5000/api/addDriver', {userId:userId ,id:booking.id  });

@@ -9,7 +9,7 @@
       "baseUrl": "./",
       "outDir": "./dist"
     },
-    "include": ["src/**/*.ts"],
+    "include": ["prisma/src/**/*.ts"],
     "exclude": ["node_modules"]
   }
   

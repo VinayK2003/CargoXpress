@@ -32,10 +32,6 @@ const RoutingControl: React.FC<{ pickup: LatLngExpression; dropoff: LatLngExpres
 
         // Clean up on unmount
         return () => {
-            if (routingControlRef.current) {
-                routingControlRef.current.remove();
-                routingControlRef.current = null;
-            }
         };
     }, [map, pickup, dropoff]);
 

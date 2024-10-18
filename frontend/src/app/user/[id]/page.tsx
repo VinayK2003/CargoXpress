@@ -31,7 +31,6 @@ const RoutingMachine: React.FC<{ pickup: L.LatLngExpression; dropoff: L.LatLngEx
         }).addTo(map);
 
         return () => {
-            map.removeControl(routingControl);
         };
     }, [map, pickup, dropoff]);
 
